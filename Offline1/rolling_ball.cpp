@@ -49,6 +49,51 @@ class Vector
             return res;
         }
 
+        double dot(Vector v)
+        {
+            return x * v.x + y * v.y + z * v.z;
+        }
+
+        void normalize()
+        {
+            double len = value();
+            x /= len;
+            y /= len;
+            z /= len;
+        }
+
+        Vector operator+(Vector v)
+        {
+            Vector res;
+            res.x = x + v.x;
+            res.y = y + v.y;
+            res.z = z + v.z;
+            return res;
+        }
+
+        Vector operator-(Vector v)
+        {
+            Vector res;
+            res.x = x - v.x;
+            res.y = y - v.y;
+            res.z = z - v.z;
+            return res;
+        }
+
+        friend Vector operator*(double a, Vector v)
+        {
+            Vector res;
+            res.x = a * v.x;
+            res.y = a * v.y;
+            res.z = a * v.z;
+            return res;
+        }
+
+        friend Vector operator*(Vector v, double a)
+        {
+            return a * v;
+        }
+
 };
 
 class Look
@@ -57,7 +102,7 @@ class Look
         double eyeX, eyeY, eyeZ;
         double centerX, centerY, centerZ;
         double upX, upY, upZ;
-        double del;
+        double del, theta;
 
         Look()
         {
@@ -71,6 +116,7 @@ class Look
             upY = 1;
             upZ = 0;
             del = 0.1;
+            theta = 0.05;
         }
 
         void lookAt()
@@ -148,6 +194,124 @@ class Look
             centerZ -= (u.z/len) * del;
         }
 
+        void rotateLeft()
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            u.normalize();
+            Vector r = u.cross(l);
+            Vector v = l * cos(theta) + r * sin(theta);
+            centerX = eyeX + v.x;
+            centerY = eyeY + v.y;
+            centerZ = eyeZ + v.z;
+        }
+
+        void rotateRight()
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            u.normalize();
+            Vector r = u.cross(l);
+            Vector v = l * cos(theta) - r * sin(theta);
+            centerX = eyeX + v.x;
+            centerY = eyeY + v.y;
+            centerZ = eyeZ + v.z;
+        }
+
+        void lookUp()
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            u.normalize();
+            double val = l.value();
+            Vector lPerp = u * val;
+            Vector uPerp = l * (1/val);
+            Vector newL = l * cos(theta) + lPerp * sin(theta);
+            Vector newU = u * cos(theta) - uPerp * sin(theta);
+            centerX = eyeX + newL.x;
+            centerY = eyeY + newL.y;
+            centerZ = eyeZ + newL.z;
+            upX = newU.x;
+            upY = newU.y;
+            upZ = newU.z;
+        }
+
+        void lookDown()
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            u.normalize();
+            double val = l.value();
+            Vector lPerp = u * val;
+            Vector uPerp = l * (1/val);
+            Vector newL = l * cos(theta) - lPerp * sin(theta);
+            Vector newU = u * cos(theta) + uPerp * sin(theta);
+            centerX = eyeX + newL.x;
+            centerY = eyeY + newL.y;
+            centerZ = eyeZ + newL.z;
+            upX = newU.x;
+            upY = newU.y;
+            upZ = newU.z;
+        }
+
+        void tiltCounterClock()
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            l.normalize();
+            Vector r = l.cross(u);
+            Vector v = u * cos(theta) + r * sin(theta);
+            upX = v.x;
+            upY = v.y;
+            upZ = v.z;
+        }
+
+        void tiltClock()
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            l.normalize();
+            Vector r = l.cross(u);
+            Vector v = u * cos(theta) - r * sin(theta);
+            upX = v.x;
+            upY = v.y;
+            upZ = v.z;
+        }
+
+        void moveUpWithoutChange() // Hoy nai
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            eyeZ += del;
+            Vector newL(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            l.normalize();
+            newL.normalize();
+            double cosine = l.dot(newL);
+            double sine = sqrt(1 - cosine * cosine);
+            Vector uPerp = l * u.value();
+            Vector newU = u * cosine + uPerp * sine;
+            upX = newU.x;
+            upY = newU.y;
+            upZ = newU.z;
+        }
+
+        void moveDownWithoutChange() // Hoy nai
+        {
+            Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            eyeZ -= del;
+            Vector newL(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
+            Vector u(upX, upY, upZ);
+            l.normalize();
+            newL.normalize();
+            double cosine = l.dot(newL);
+            double sine = sqrt(1 - cosine * cosine);
+            Vector uPerp = l * u.value();
+            Vector newU = u * cosine - uPerp * sine;
+            upX = newU.x;
+            upY = newU.y;
+            upZ = newU.z;
+        }
+
 }look;
 
 void display()
@@ -182,6 +346,35 @@ void init()
 
 void keyboardListener(unsigned char key, int x, int y)
 {
+    switch(key)
+    {
+        case '1':
+            look.rotateLeft();
+            break;
+        case '2':
+            look.rotateRight();
+            break;
+        case '3':
+            look.lookUp();
+            break;
+        case '4':
+            look.lookDown();
+            break;
+        case '5':
+            look.tiltCounterClock();
+            break;
+        case '6':
+            look.tiltClock();
+            break;
+        case 'w':
+            look.moveUpWithoutChange();
+            break;
+        case 's':
+            look.moveDownWithoutChange();
+            break;
+        default:
+            break;
+    }
    
 }
 

@@ -9,6 +9,8 @@
 
 using namespace std;
 
+double wallDim = 1.5, wallHeight = 0.25;
+
 class Vector
 {
     public:
@@ -278,7 +280,7 @@ class Look
             upZ = v.z;
         }
 
-        void moveUpWithoutChange() // Hoy nai
+        void moveUpWithoutChange()
         {
             Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
             eyeZ += del;
@@ -295,7 +297,7 @@ class Look
             upZ = newU.z;
         }
 
-        void moveDownWithoutChange() // Hoy nai
+        void moveDownWithoutChange()
         {
             Vector l(eyeX, eyeY, eyeZ, centerX, centerY, centerZ);
             eyeZ -= del;
@@ -314,6 +316,68 @@ class Look
 
 }look;
 
+void drawQuad(double x1, double y1, double z1, double x2, double y2, double z2, double x3,
+              double y3, double z3, double x4, double y4, double z4)
+{
+    glBegin(GL_QUADS);
+    {
+        glVertex3f(x1, y1, z1);
+        glVertex3f(x2, y2, z2);
+        glVertex3f(x3, y3, z3);
+        glVertex3f(x4, y4, z4);
+    }glEnd();
+}
+
+void drawCheckerBoard()
+{
+    glColor3f(0, 0, 0);
+    for(int i=-100; i<=100; i++){
+        for(int j=-200; j<=200; j++){
+            if(j%2 == 0){
+                glPushMatrix();
+                glTranslatef(i+.5, j*.5, 0);
+                drawQuad(0, 0, 0, .5, 0, 0, .5, .5, 0, 0, .5, 0);
+                glPopMatrix();
+            }
+            else{
+                glPushMatrix();
+                glTranslatef(i, j*.5, 0);
+                drawQuad(0, 0, 0, .5, 0, 0, .5, .5, 0, 0, .5, 0);
+                glPopMatrix();
+            }
+        }
+    }
+    glColor3f(1, 1, 1);
+    for(int i=-100; i<=100; i++){
+        for(int j=-200; j<=200; j++){
+            if(j%2 == 0){
+                glPushMatrix();
+                glTranslatef(i, j*.5, 0);
+                drawQuad(.5, .5, 0, 0, .5, 0, 0, 0, 0, .5, 0, 0);
+                glPopMatrix();
+            }
+            else{
+                glPushMatrix();
+                glTranslatef(i+.5, j*.5, 0);
+                drawQuad(.5, .5, 0, 0, .5, 0, 0, 0, 0, .5, 0, 0);
+                glPopMatrix();
+            }
+        }
+    }
+}
+
+void drawWalls()
+{
+    glColor3f(1, 0, 0);
+    for(int i=0; i<4; i++){
+        glPushMatrix();
+        glRotatef(90*i, 0, 0, 1);
+        glTranslatef(wallDim, 0, 0);
+        drawQuad(0, -wallDim, 0, 0, wallDim, 0, 0, wallDim, wallHeight, 0, -wallDim, wallHeight);
+        glPopMatrix();
+    }
+}
+
 void display()
 {
     // cout << "Displaying " << counter++ << endl;
@@ -323,14 +387,8 @@ void display()
     glLoadIdentity();
     look.lookAt();
     
-    glBegin(GL_QUADS);
-    {
-        glColor3f(1, 0, 0);
-        glVertex3f(1, 1, 0);
-        glVertex3f(-1, 1, 0);
-        glVertex3f(-1, -1, 0);
-        glVertex3f(1, -1, 0);
-    }glEnd();
+    drawCheckerBoard();
+    drawWalls();
 
     glFlush();
 }

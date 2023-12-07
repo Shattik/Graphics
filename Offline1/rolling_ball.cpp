@@ -7,9 +7,12 @@
  #include <GL/glut.h>
 #endif
 
+#define rad(x) ((x) * 3.1416 / 180)
+
 using namespace std;
 
-double wallDim = 1.5, wallHeight = 0.25;
+double wallDim = 1.5, wallHeight = 0.25, wallSide, wallNum = 4, wallAngle;
+vector<pair<double, pair<double, double>>> walls;
 
 class Vector
 {
@@ -118,7 +121,7 @@ class Look
             upY = 1;
             upZ = 0;
             del = 0.1;
-            theta = 0.05;
+            theta = 0.05; // radians
         }
 
         void lookAt()
@@ -369,11 +372,11 @@ void drawCheckerBoard()
 void drawWalls()
 {
     glColor3f(1, 0, 0);
-    for(int i=0; i<4; i++){
+    for(int i=0; i<wallNum; i++){
         glPushMatrix();
-        glRotatef(90*i, 0, 0, 1);
+        glRotatef(wallAngle*i, 0, 0, 1);
         glTranslatef(wallDim, 0, 0);
-        drawQuad(0, -wallDim, 0, 0, wallDim, 0, 0, wallDim, wallHeight, 0, -wallDim, wallHeight);
+        drawQuad(0, -wallSide, 0, 0, wallSide, 0, 0, wallSide, wallHeight, 0, -wallSide, wallHeight);
         glPopMatrix();
     }
 }
@@ -400,6 +403,22 @@ void init()
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(60, 1, 1, 100);
+
+    wallAngle = 360 / wallNum;
+    wallSide = wallDim * tan(rad(wallAngle/2));
+    for(int i=0; i<wallNum; i++){
+        double angle = wallAngle * i;
+        double m;
+        if((angle+90) == 90 || (angle+90) == 270){
+            m = INT_MAX;
+        }
+        else{
+            m = tan(rad(angle + 90));
+        }
+        double x = wallDim * cos(rad(angle));
+        double y = wallDim * sin(rad(angle));
+        walls.push_back({m, {x, y}});
+    }
 }
 
 void keyboardListener(unsigned char key, int x, int y)

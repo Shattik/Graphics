@@ -28,7 +28,7 @@ class Ball
         double radius;
         double posx, posy, posz;
         vector<Vector> vertices;
-        Vector velocity, actualUp, ballsUp;
+        Vector velocity, actualUp;
         bool showUp;
         int showUpCounter;
 
@@ -42,7 +42,6 @@ class Ball
             posz = radius;
             velocity = Vector(.05, .05, 0);
             actualUp = Vector(0, 0, 1);
-            ballsUp = Vector(0, 0, 1);
             showUp = true;
             showUpCounter = 0;
         }
@@ -166,9 +165,50 @@ class Ball
                 showUpCounter = 0;
             }
             glPopMatrix();
-            // posx += velocity.x;
-            // posy += velocity.y;
-            // posz += velocity.z;
+        }
+
+        void vertexRotation(Vector axis, double angle)
+        {
+            for(int i=0; i<vertices.size(); i++){
+                Vector v = vertices[i];
+                vertices[i] = v*cos(angle) + axis.cross(v)*sin(angle) + axis*(axis.dot(v))*(1-cos(angle));
+            }
+        }
+
+        void moveForward()
+        {
+            Vector axis = actualUp.cross(velocity);
+            axis.normalize();
+            double angle = velocity.value() / radius; // radian
+            vertexRotation(axis, angle);
+            posx += velocity.x;
+            posy += velocity.y;
+            posz += velocity.z;
+        }
+
+        void moveBackward()
+        {
+            Vector axis = actualUp.cross(velocity);
+            axis.normalize();
+            double angle = velocity.value() / radius; // radian
+            vertexRotation(axis, -angle);
+            posx -= velocity.x;
+            posy -= velocity.y;
+            posz -= velocity.z;
+        }
+
+        void rotateDirectionAnticlock()
+        {
+            actualUp.normalize();
+            Vector left = actualUp.cross(velocity);
+            velocity = velocity * cos(0.05) + left * sin(0.05);
+        }
+
+        void rotateDirectionClock()
+        {
+            actualUp.normalize();
+            Vector left = actualUp.cross(velocity);
+            velocity = velocity * cos(0.05) - left * sin(0.05);
         }
 
 }ball;
@@ -293,6 +333,18 @@ void keyboardListener(unsigned char key, int x, int y)
             break;
         case 's':
             look.moveDownWithoutChange();
+            break;
+        case 'i':
+            ball.moveForward();
+            break;
+        case 'k':
+            ball.moveBackward();
+            break;
+        case 'j':
+            ball.rotateDirectionAnticlock();
+            break;
+        case 'l':
+            ball.rotateDirectionClock();
             break;
         default:
             break;

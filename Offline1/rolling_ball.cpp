@@ -16,9 +16,11 @@
 
 using namespace std;
 
+void Timer(int value);
+
 double wallDim = 1.5, wallHeight = 0.25, wallSide, wallNum = 4, wallAngle;
 vector<pair<double, pair<double, double>>> walls;
-
+bool isSimul = false;
 
 class Ball
 {
@@ -31,6 +33,7 @@ class Ball
         Vector velocity, actualUp;
         bool showUp;
         int showUpCounter;
+        double colTime;
 
         Ball()
         {
@@ -40,7 +43,7 @@ class Ball
             posx = 0;
             posy = 0;
             posz = radius;
-            velocity = Vector(.05, .05, 0);
+            velocity = Vector(.03, .03, 0);
             actualUp = Vector(0, 0, 1);
             showUp = true;
             showUpCounter = 0;
@@ -186,6 +189,17 @@ class Ball
             posz += velocity.z;
         }
 
+        void moveForward(double t)
+        {
+            Vector axis = actualUp.cross(velocity);
+            axis.normalize();
+            double angle = (velocity.value() * t) / radius; // radian
+            vertexRotation(axis, angle);
+            posx += velocity.x * t;
+            posy += velocity.y * t;
+            posz += velocity.z * t;
+        }
+
         void moveBackward()
         {
             Vector axis = actualUp.cross(velocity);
@@ -195,6 +209,17 @@ class Ball
             posx -= velocity.x;
             posy -= velocity.y;
             posz -= velocity.z;
+        }
+
+        void moveBackward(double t)
+        {
+            Vector axis = actualUp.cross(velocity);
+            axis.normalize();
+            double angle = (velocity.value() * t) / radius; // radian
+            vertexRotation(axis, -angle);
+            posx -= velocity.x * t;
+            posy -= velocity.y * t;
+            posz -= velocity.z * t;
         }
 
         void rotateDirectionAnticlock()
@@ -209,6 +234,95 @@ class Ball
             actualUp.normalize();
             Vector left = actualUp.cross(velocity);
             velocity = velocity * cos(0.05) - left * sin(0.05);
+        }
+
+        double collissionCheckSimul()
+        {
+            double xtime, ytime;
+            if(velocity.x > 0){
+                xtime = (wallDim - posx - radius) / velocity.x;
+            }
+            else{
+                xtime = (posx + wallDim - radius) / (-velocity.x);
+            }
+            if(velocity.y > 0){
+                ytime = (wallDim - posy - radius) / velocity.y;
+            }
+            else{
+                ytime = (posy + wallDim - radius) / (-velocity.y);
+            }
+            if(xtime > ytime && ytime < 1){
+                colTime = ytime;
+                return ytime;
+            }
+            else if(xtime < ytime && xtime < 1){
+                colTime = xtime;
+                return xtime;
+            }
+            else if(xtime == ytime && xtime < 1){
+                colTime = xtime;
+                return xtime;
+            }
+            else{
+                return -1;
+            }
+        }
+
+        double collissionCheckSimulBack()
+        {
+            double xtime, ytime;
+            double xvel = -velocity.x;
+            double yvel = -velocity.y;
+            if(xvel > 0){
+                xtime = (wallDim - posx - radius) / xvel;
+            }
+            else{
+                xtime = (posx + wallDim - radius) / (-xvel);
+            }
+            if(yvel > 0){
+                ytime = (wallDim - posy - radius) / yvel;
+            }
+            else{
+                ytime = (posy + wallDim - radius) / (-yvel);
+            }
+            if(xtime > ytime && ytime < 1){
+                colTime = ytime;
+                return ytime;
+            }
+            else if(xtime < ytime && xtime < 1){
+                colTime = xtime;
+                return xtime;
+            }
+            else if(xtime == ytime && xtime < 1){
+                colTime = xtime;
+                return xtime;
+            }
+            else{
+                return -1;
+            }
+        }
+
+        void doCollision()
+        {
+            bool x = false, y = false;
+            if(wallDim-posx-radius <= 0.05 && wallDim-posx-radius >= -0.05){
+                x = true;
+            }
+            else if(posx-radius+wallDim <= 0.05 && posx-radius+wallDim >= -0.05){
+                x = true;
+            }
+            if(wallDim-posy-radius <= 0.05 && wallDim-posy-radius >= -0.05){
+                y = true;
+            }
+            else if(posy-radius+wallDim <= 0.05 && posy-radius+wallDim >= -0.05){
+                y = true;
+            }
+            if(x){
+                velocity.x *= -1;
+            }
+            if(y){
+                velocity.y *= -1;
+            }
         }
 
 }ball;
@@ -335,16 +449,39 @@ void keyboardListener(unsigned char key, int x, int y)
             look.moveDownWithoutChange();
             break;
         case 'i':
-            ball.moveForward();
+            if(!isSimul){
+                double time = ball.collissionCheckSimul();
+                if(time != -1){
+                    ball.moveForward(ball.colTime);
+                    ball.doCollision();
+                    ball.moveForward(1-ball.colTime);
+                }
+                else{
+                    ball.moveForward();
+                }
+            }
             break;
         case 'k':
-            ball.moveBackward();
+            if(!isSimul){
+                double time = ball.collissionCheckSimulBack();
+                if(time != -1){
+                    ball.moveBackward(ball.colTime);
+                    ball.doCollision();
+                    ball.moveBackward(1-ball.colTime);
+                }
+                else{
+                    ball.moveBackward();
+                }
+            }
             break;
         case 'j':
             ball.rotateDirectionAnticlock();
             break;
         case 'l':
             ball.rotateDirectionClock();
+            break;
+        case ' ':
+            isSimul = !isSimul;
             break;
         default:
             break;
@@ -379,10 +516,52 @@ void specialKeyListener(int key, int x, int y)
     }
 }
 
+void CollisionTimer(int value){
+    bool x = false, y = false;
+    if(isSimul){
+        ball.moveForward(ball.colTime);
+    }
+    if(wallDim-ball.posx-ball.radius <= 0.05 && wallDim-ball.posx-ball.radius >= -0.05){
+        x = true;
+    }
+    else if(ball.posx-ball.radius+wallDim <= 0.05 && ball.posx-ball.radius+wallDim >= -0.05){
+        x = true;
+    }
+    if(wallDim-ball.posy-ball.radius <= 0.05 && wallDim-ball.posy-ball.radius >= -0.05){
+        y = true;
+    }
+    else if(ball.posy-ball.radius+wallDim <= 0.05 && ball.posy-ball.radius+wallDim >= -0.05){
+        y = true;
+    }
+    if(x){
+        ball.velocity.x *= -1;
+    }
+    if(y){
+        ball.velocity.y *= -1;
+    }
+    glutPostRedisplay();
+    double time = ball.collissionCheckSimul();
+    if(time != -1 && isSimul){
+        glutTimerFunc(time*50, CollisionTimer, 0);
+    }
+    else{
+        glutTimerFunc(50, Timer, 0);
+    }
+}
+
 void Timer(int value)
 {
+    if(isSimul){
+        ball.moveForward();
+    }
     glutPostRedisplay();
-    glutTimerFunc(50, Timer, 0);
+    double time = ball.collissionCheckSimul();
+    if(time != -1 && isSimul){
+        glutTimerFunc(time*50, CollisionTimer, 0);
+    }
+    else{
+        glutTimerFunc(50, Timer, 0);
+    }
 }
 
 int main(int argc, char** argv)

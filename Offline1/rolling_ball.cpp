@@ -28,6 +28,9 @@ class Ball
         double radius;
         double posx, posy, posz;
         vector<Vector> vertices;
+        Vector velocity, actualUp, ballsUp;
+        bool showUp;
+        int showUpCounter;
 
         Ball()
         {
@@ -37,6 +40,11 @@ class Ball
             posx = 0;
             posy = 0;
             posz = radius;
+            velocity = Vector(.05, .05, 0);
+            actualUp = Vector(0, 0, 1);
+            ballsUp = Vector(0, 0, 1);
+            showUp = true;
+            showUpCounter = 0;
         }
 
         void initializeVertices()
@@ -91,12 +99,76 @@ class Ball
             }
         }
 
+        void drawArrowBody()
+        {
+            for(int i=0; i<4; i++){
+                glPushMatrix();
+                glRotatef(90*i, 1, 0, 0);
+                glTranslatef(0, 0, 0.01);
+                drawQuad(0, -0.01, 0, 0, 0.01, 0, 2*radius, 0.01, 0, 2*radius, -0.01, 0);
+                glPopMatrix();
+            }
+        }
+
+        void drawArrowHead()
+        {
+            for(int i=0; i<4; i++){
+                glPushMatrix();
+                glRotatef(90*i, 1, 0, 0);
+                drawTriangle(0, 0.015, 0.015, 0, -0.015, 0.015, .05, 0, 0);
+                glPopMatrix();
+            }
+        }
+
+        void drawDirection()
+        {
+            double val = velocity.value();
+            double angle = acos(velocity.x / val) * 180 / pi;
+            if(velocity.y < 0){
+                angle = 360 - angle;
+            }
+            glPushMatrix();
+            glRotatef(angle, 0, 0, 1);
+            drawArrowBody();
+            glPushMatrix();
+            glTranslatef(2*radius, 0, 0);
+            drawArrowHead();
+            glPopMatrix();
+            glPopMatrix();
+        }
+
+        void drawRealUp()
+        {
+            glPushMatrix();
+            glRotatef(-90, 0, 1, 0);
+            drawArrowBody();
+            glPushMatrix();
+            glTranslatef(2*radius, 0, 0);
+            drawArrowHead();
+            glPopMatrix();
+            glPopMatrix();
+        }
+
         void drawBall()
         {
             glPushMatrix();
             glTranslatef(posx, posy, posz);
             draw();
+            glColor3f(0, 0, 1);
+            drawDirection();
+            if(showUp){
+                glColor3f(0, 1, 1);
+                drawRealUp();    
+            }
+            showUpCounter++;
+            if(showUpCounter == 10){
+                showUp = !showUp;
+                showUpCounter = 0;
+            }
             glPopMatrix();
+            // posx += velocity.x;
+            // posy += velocity.y;
+            // posz += velocity.z;
         }
 
 }ball;

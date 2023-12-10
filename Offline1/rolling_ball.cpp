@@ -325,6 +325,29 @@ class Ball
             }
         }
 
+        void doCollisionEdge()
+        {
+            bool x = false, y = false;
+            if(wallDim-posx-radius <= 0.05 && wallDim-posx-radius >= -0.05 && velocity.x > 0){
+                x = true;
+            }
+            else if(posx-radius+wallDim <= 0.05 && posx-radius+wallDim >= -0.05 && velocity.x < 0){
+                x = true;
+            }
+            if(wallDim-posy-radius <= 0.05 && wallDim-posy-radius >= -0.05 && velocity.y > 0){
+                y = true;
+            }
+            else if(posy-radius+wallDim <= 0.05 && posy-radius+wallDim >= -0.05 && velocity.y < 0){
+                y = true;
+            }
+            if(x){
+                velocity.x *= -1;
+            }
+            if(y){
+                velocity.y *= -1;
+            }
+        }
+
 }ball;
 
 void drawCheckerBoard()
@@ -482,6 +505,9 @@ void keyboardListener(unsigned char key, int x, int y)
             break;
         case ' ':
             isSimul = !isSimul;
+            if(isSimul){
+                ball.doCollisionEdge();
+            }
             break;
         default:
             break;

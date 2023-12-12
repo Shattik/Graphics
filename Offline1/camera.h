@@ -188,9 +188,11 @@ class Look
             Vector u(upX, upY, upZ);
             l.normalize();
             newL.normalize();
+            Vector projPerp = Vector(-l.y, l.x, 0);
+            projPerp.normalize();
             double cosine = l.dot(newL);
             double sine = sqrt(1 - cosine * cosine);
-            Vector uPerp = l * u.value();
+            Vector uPerp = projPerp.cross(u);
             Vector newU = u * cosine + uPerp * sine;
             upX = newU.x;
             upY = newU.y;
@@ -205,9 +207,11 @@ class Look
             Vector u(upX, upY, upZ);
             l.normalize();
             newL.normalize();
+            Vector projPerp = Vector(-l.y, l.x, 0);
+            projPerp.normalize();
             double cosine = l.dot(newL);
             double sine = sqrt(1 - cosine * cosine);
-            Vector uPerp = l * u.value();
+            Vector uPerp = projPerp.cross(u);
             Vector newU = u * cosine - uPerp * sine;
             upX = newU.x;
             upY = newU.y;

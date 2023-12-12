@@ -26,12 +26,11 @@ double incRad = maxRad/10;
 
 void drawSpherePart()
 {
-
     int parts = 50;
     for(int i=0; i<parts; i++){
         double x1 = 1 - 2.0*i/parts;
         double x2 = 1 - 2.0*(i+1)/parts;
-        for(int j=0; j<=parts; j++){
+        for(int j=0; j<parts; j++){
             double y1 = 1 - 2.0*j/parts;
             double y2 = 1 - 2.0*(j+1)/parts;
             Vector v1(x1, y1, 1);

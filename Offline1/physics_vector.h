@@ -46,6 +46,9 @@ class Vector
         void normalize()
         {
             double len = value();
+            if(len == 0){
+                return;
+            }
             x /= len;
             y /= len;
             z /= len;

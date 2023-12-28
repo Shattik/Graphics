@@ -187,13 +187,13 @@ class Matrixh
             }
         }
 
-        void print()
+        void print(std::ostream &out)
         {
             for(int i = 0; i < 4; i++){
                 for(int j = 0; j < 4; j++){
-                    std::cout << ar[i][j] << " ";
+                    out << ar[i][j] << " ";
                 }
-                std::cout << std::endl;
+                out << std::endl;
             }
         }
 
@@ -208,7 +208,7 @@ class Matrixh
             return res;
         }
 
-        Matrixh& operator=(Matrixh &m)
+        Matrixh operator=(Matrixh m)
         {
             for(int i = 0; i < 4; i++){
                 for(int j = 0; j < 4; j++){
@@ -218,7 +218,7 @@ class Matrixh
             return *this;
         }
 
-        Matrixh operator*(Matrixh &m)
+        Matrixh operator*(Matrixh m)
         {
             Matrixh res;
             for(int i = 0; i < 4; i++){

@@ -8,8 +8,131 @@ class Pointh;
 class Matrixh;
 class Vector;
 
-Matrixh IDENTITY;
-Vector X_AXIS(1, 0, 0), Y_AXIS(0, 1, 0), Z_AXIS(0, 0, 1);
+class Matrixh
+{
+    public:
+        double ar[4][4];
+
+        Matrixh()
+        {
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    if(i == j){
+                        ar[i][j] = 1;
+                    }
+                    else{
+                        ar[i][j] = 0;
+                    }
+                }
+            }
+        }
+
+        Matrixh(double ar[4][4])
+        {
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    this->ar[i][j] = ar[i][j];
+                }
+            }
+        }
+
+        Matrixh(const Matrixh &m)
+        {
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    ar[i][j] = m.ar[i][j];
+                }
+            }
+        }
+
+        void print(std::ostream &out)
+        {
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    out << ar[i][j] << " ";
+                }
+                out << std::endl;
+            }
+        }
+
+        Matrixh transpose()
+        {
+            Matrixh res;
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    res.ar[i][j] = ar[j][i];
+                }
+            }
+            return res;
+        }
+
+        Matrixh operator=(Matrixh m)
+        {
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    ar[i][j] = m.ar[i][j];
+                }
+            }
+            return *this;
+        }
+
+        Matrixh operator*(Matrixh m)
+        {
+            Matrixh res;
+            for(int i = 0; i < 4; i++){
+                for(int j = 0; j < 4; j++){
+                    res.ar[i][j] = 0;
+                    for(int k = 0; k < 4; k++){
+                        res.ar[i][j] += ar[i][k] * m.ar[k][j];
+                    }
+                }
+            }
+            return res;
+        }    
+
+};
+
+class Pointh
+{
+    public:
+        double x, y, z, w;
+
+        Pointh()
+        {
+            x = 0;
+            y = 0;
+            z = 0;
+            w = 1;
+        }
+
+        Pointh(double x, double y, double z)
+        {
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            w = 1;
+        }
+
+        void normalize()
+        {
+            x = x / w;
+            y = y / w;
+            z = z / w;
+            w = 1;
+        }
+
+        friend Pointh operator*(Matrixh m, Pointh p)
+        {
+            Pointh res;
+            res.x = m.ar[0][0] * p.x + m.ar[0][1] * p.y + m.ar[0][2] * p.z + m.ar[0][3] * p.w;
+            res.y = m.ar[1][0] * p.x + m.ar[1][1] * p.y + m.ar[1][2] * p.z + m.ar[1][3] * p.w;
+            res.z = m.ar[2][0] * p.x + m.ar[2][1] * p.y + m.ar[2][2] * p.z + m.ar[2][3] * p.w;
+            res.w = m.ar[3][0] * p.x + m.ar[3][1] * p.y + m.ar[3][2] * p.z + m.ar[3][3] * p.w;
+            res.normalize();
+            return res;
+        }
+
+};
 
 class Vector
 {
@@ -108,130 +231,7 @@ class Vector
 
 };
 
-class Pointh
-{
-    public:
-        double x, y, z, w;
-
-        Pointh()
-        {
-            x = 0;
-            y = 0;
-            z = 0;
-            w = 1;
-        }
-
-        Pointh(double x, double y, double z)
-        {
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            w = 1;
-        }
-
-        void normalize()
-        {
-            x = x / w;
-            y = y / w;
-            z = z / w;
-            w = 1;
-        }
-
-        friend Pointh operator*(Matrixh m, Pointh p)
-        {
-            Pointh res;
-            res.x = m.ar[0][0] * p.x + m.ar[0][1] * p.y + m.ar[0][2] * p.z + m.ar[0][3] * p.w;
-            res.y = m.ar[1][0] * p.x + m.ar[1][1] * p.y + m.ar[1][2] * p.z + m.ar[1][3] * p.w;
-            res.z = m.ar[2][0] * p.x + m.ar[2][1] * p.y + m.ar[2][2] * p.z + m.ar[2][3] * p.w;
-            res.w = m.ar[3][0] * p.x + m.ar[3][1] * p.y + m.ar[3][2] * p.z + m.ar[3][3] * p.w;
-            res.normalize();
-            return res;
-        }
-
-};
-
-class Matrixh
-{
-    public:
-        double ar[4][4];
-
-        Matrixh()
-        {
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    if(i == j){
-                        ar[i][j] = 1;
-                    }
-                    else{
-                        ar[i][j] = 0;
-                    }
-                }
-            }
-        }
-
-        Matrixh(double ar[4][4])
-        {
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    this->ar[i][j] = ar[i][j];
-                }
-            }
-        }
-
-        Matrixh(Matrixh &m)
-        {
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    ar[i][j] = m.ar[i][j];
-                }
-            }
-        }
-
-        void print(std::ostream &out)
-        {
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    out << ar[i][j] << " ";
-                }
-                out << std::endl;
-            }
-        }
-
-        Matrixh transpose()
-        {
-            Matrixh res;
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    res.ar[i][j] = ar[j][i];
-                }
-            }
-            return res;
-        }
-
-        Matrixh operator=(Matrixh m)
-        {
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    ar[i][j] = m.ar[i][j];
-                }
-            }
-            return *this;
-        }
-
-        Matrixh operator*(Matrixh m)
-        {
-            Matrixh res;
-            for(int i = 0; i < 4; i++){
-                for(int j = 0; j < 4; j++){
-                    res.ar[i][j] = 0;
-                    for(int k = 0; k < 4; k++){
-                        res.ar[i][j] += ar[i][k] * m.ar[k][j];
-                    }
-                }
-            }
-            return res;
-        }    
-
-};
+Matrixh IDENTITY;
+Vector X_AXIS(1, 0, 0), Y_AXIS(0, 1, 0), Z_AXIS(0, 0, 1);
 
 #endif

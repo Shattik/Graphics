@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <stack>
 #include <cmath>
 #include "matrix.h"
@@ -6,10 +7,13 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#define PI 3.1416
+#define PI 3.14159265358979323846
 #define RAD(x) ((x) * PI / 180)
 
 class Model;
+class Triangle;
+class View;
+class Projection;
 
 class Model
 {
@@ -106,7 +110,7 @@ class Triangle
     {
         for(int i = 0; i < 3; i++)
         {
-            out << points[i].x << " " << points[i].y << " " << points[i].z;
+            out << std::fixed << std::setprecision(7) << points[i].x << " " << points[i].y << " " << points[i].z << " ";
             out << std::endl;
         }
     }

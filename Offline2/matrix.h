@@ -132,6 +132,11 @@ class Pointh
             return res;
         }
 
+        bool operator==(Pointh p)
+        {
+            return (x == p.x && y == p.y && z == p.z);
+        }
+
 };
 
 class Vector

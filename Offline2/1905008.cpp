@@ -3,6 +3,7 @@
 #include <vector>
 #include "matrix.h"
 #include "transform.h"
+#include "raster.h"
 
 using namespace std;
 
@@ -80,8 +81,26 @@ vector<Triangle> transformations()
     return triangles;
 }
 
+Zbuffer* getPopulatedBuffer(vector<Triangle> triangles)
+{
+    ifstream in("config.txt");
+    int width, height;
+    in >> width >> height;
+    Zbuffer *zbuffer = new Zbuffer(width, height);
+    in.close();
+
+    ofstream out("z_buffer.txt");
+    Zhelper zhelper(zbuffer);
+    zhelper.populateZbuffer(triangles);
+    zbuffer->print(out);
+    out.close();
+    return zbuffer;
+}
+
 int main()
 {
     vector<Triangle> triangles = transformations();
+    Zbuffer *zbuffer;
+    zbuffer = getPopulatedBuffer(triangles);
     return 0;
 }

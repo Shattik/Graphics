@@ -134,7 +134,8 @@ class Pointh
 
         bool operator==(Pointh p)
         {
-            return (x == p.x && y == p.y && z == p.z);
+            double epsilon = 0.0000001;
+            return ((fabs(x - p.x) < epsilon) && (fabs(y - p.y) < epsilon) && (fabs(z - p.z) < epsilon));
         }
 
 };

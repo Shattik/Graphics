@@ -4,6 +4,7 @@
 #include "matrix.h"
 #include "transform.h"
 #include "raster.h"
+#include "bitmap_image.hpp"
 
 using namespace std;
 
@@ -97,10 +98,24 @@ Zbuffer* getPopulatedBuffer(vector<Triangle> triangles)
     return zbuffer;
 }
 
+void createImage(Zbuffer *zbuffer)
+{
+    bitmap_image *image = new bitmap_image(zbuffer->width, zbuffer->height);    
+    for(int i = 0; i < zbuffer->height; i++){
+        for(int j = 0; j < zbuffer->width; j++){
+            image->set_pixel(j, i, zbuffer->red[i][j], zbuffer->green[i][j], zbuffer->blue[i][j]);
+        }
+    }
+    image->save_image("out.bmp");
+    delete image;
+}
+
 int main()
 {
     vector<Triangle> triangles = transformations();
     Zbuffer *zbuffer;
     zbuffer = getPopulatedBuffer(triangles);
+    createImage(zbuffer);
+    delete zbuffer;
     return 0;
 }

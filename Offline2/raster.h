@@ -135,7 +135,7 @@ class Zhelper
                 return 0;
             }
             else{
-                return ceil((zbuffer->topY - y)/(zbuffer->dy));
+                return round((zbuffer->topY - y)/(zbuffer->dy));
             }
         }
         
@@ -147,7 +147,7 @@ class Zhelper
                 return zbuffer->height - 1;
             }
             else{
-                int row = ceil((y - low)/zbuffer->dy);
+                int row = round((y - low)/zbuffer->dy);
                 return zbuffer->height - row - 1;
             }
         }
@@ -159,7 +159,7 @@ class Zhelper
                 return 0;
             }
             else{
-                return ceil((x - zbuffer->leftX)/(zbuffer->dx));
+                return round((x - zbuffer->leftX)/(zbuffer->dx));
             }
         }
 
@@ -171,7 +171,7 @@ class Zhelper
                 return zbuffer->width - 1;
             }
             else{
-                int col = ceil((high - x)/zbuffer->dx);
+                int col = round((high - x)/zbuffer->dx);
                 return zbuffer->width - col - 1;
             }
         }
@@ -179,13 +179,14 @@ class Zhelper
         std::vector<std::pair<double, double>> getXZps(Pointh p1, Pointh p2, Pointh p3, double yp)
         {
             std::vector<std::pair<double, double>> xzps;
-            if(yp == p1.y){
+            double epsilon = 0.0000001;
+            if(fabs(yp - p1.y) < epsilon){
                 xzps.push_back(std::make_pair(p1.x, p1.z));
             }
-            if(yp == p2.y){
+            if(fabs(yp - p2.y) < epsilon){
                 xzps.push_back(std::make_pair(p2.x, p2.z));
             }
-            if(yp == p3.y){
+            if(fabs(yp - p3.y) < epsilon){
                 xzps.push_back(std::make_pair(p3.x, p3.z));
             }
             if((yp > p1.y && yp < p2.y) || (yp < p1.y && yp > p2.y)){
@@ -208,9 +209,10 @@ class Zhelper
 
         double getZval(double x1, double z1, double x2, double z2, double xp)
         {
-            if(xp == x1)
+            double epsilon = 0.0000001;
+            if(fabs(xp - x1) < epsilon)
                 return z1;
-            if(xp == x2)
+            if(fabs(xp - x2) < epsilon)
                 return z2;
             return z1 + ((xp - x1)/(x2 - x1))*(z2 - z1);
         }
@@ -228,9 +230,19 @@ class Zhelper
                 for(int j=highRow; j<=lowRow; j++){
                     double yp = zbuffer->getRowY(j);
                     std::vector<std::pair<double, double>> xzps = getXZps(t.points[0], t.points[1], t.points[2], yp);
-                    int leftCol = getLeftCol(xzps[0].first, xzps[1].first);
-                    int rightCol = getRightCol(xzps[1].first, xzps[0].first);
-                        
+                    int leftCol, rightCol;
+                    if(xzps.size() == 0){
+                        continue;
+                    }
+                    else if(xzps.size() == 1){
+                        leftCol = getLeftCol(xzps[0].first, xzps[0].first);
+                        rightCol = getRightCol(xzps[0].first, xzps[0].first);
+                    }
+                    else{
+                        leftCol = getLeftCol(xzps[0].first, xzps[1].first);
+                        rightCol = getRightCol(xzps[1].first, xzps[0].first);
+                    }    
+                    
                     for(int k=leftCol; k<=rightCol; k++){
                         double xp = zbuffer->getColX(k);
                         double zp = getZval(xzps[0].first, xzps[0].second, xzps[1].first, xzps[1].second, xp);

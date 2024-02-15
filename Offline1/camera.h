@@ -33,6 +33,9 @@ class Look
             eyeX += (v.x/len) * del;
             eyeY += (v.y/len) * del;
             eyeZ += (v.z/len) * del;
+            centerX += (v.x/len) * del;
+            centerY += (v.y/len) * del;
+            centerZ += (v.z/len) * del;
         }
 
         void moveBackward()
@@ -42,6 +45,9 @@ class Look
             eyeX -= (v.x/len) * del;
             eyeY -= (v.y/len) * del;
             eyeZ -= (v.z/len) * del;
+            centerX -= (v.x/len) * del;
+            centerY -= (v.y/len) * del;
+            centerZ -= (v.z/len) * del;
         }
 
         void moveRight()

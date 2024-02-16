@@ -11,10 +11,99 @@
 #include "1905008_camera.h"
 #include "1905008_classes.h"
 
-#define rad(x) ((x) * 3.1416 / 180)
-#define pi 3.1416
+#define rad(x) ((x) * acos(-1) / 180)
+#define pi acos(-1)
 
 using namespace std;
+
+vector<Object*> objects;
+vector<PointLight*> pointLights;
+vector<SpotLight*> spotLights;
+int recursionLevel, screenWidth, screenHeight;
+
+void loadData()
+{
+    ifstream fin("scene.txt");
+    fin >> recursionLevel >> screenWidth;
+    screenHeight = screenWidth;
+
+    int n;
+    fin >> n;
+    for(int i = 0; i < n; i++)
+    {
+        string type;
+        fin >> type;
+        if(type == "sphere")
+        {
+            Vector center;
+            double radius;
+            fin >> center.x >> center.y >> center.z;
+            fin >> radius;
+            Sphere *s = new Sphere(center, radius);
+            fin >> s->color[0] >> s->color[1] >> s->color[2];
+            fin >> s->coEfficients[0] >> s->coEfficients[1] >> s->coEfficients[2] >> s->coEfficients[3];
+            fin >> s->shine;
+            objects.push_back(s);
+        }
+        else if(type == "triangle")
+        {
+            Vector a, b, c;
+            fin >> a.x >> a.y >> a.z;
+            fin >> b.x >> b.y >> b.z;
+            fin >> c.x >> c.y >> c.z;
+            Triangle *t = new Triangle(a, b, c);
+            fin >> t->color[0] >> t->color[1] >> t->color[2];
+            fin >> t->coEfficients[0] >> t->coEfficients[1] >> t->coEfficients[2] >> t->coEfficients[3];
+            fin >> t->shine;
+            objects.push_back(t);
+        }
+        else if(type == "general")
+        {
+            double a, b, c, d, e, f, g, h, i, j;
+            double refx, refy, refz, len, wid, hei;
+            fin >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j;
+            General *gen = new General(a, b, c, d, e, f, g, h, i, j);
+            fin >> refx >> refy >> refz;
+            fin >> len >> wid >> hei;
+            gen->setDimensions(refx, refy, refz, len, wid, hei);
+            fin >> gen->color[0] >> gen->color[1] >> gen->color[2];
+            fin >> gen->coEfficients[0] >> gen->coEfficients[1] >> gen->coEfficients[2] >> gen->coEfficients[3];
+            fin >> gen->shine;
+            objects.push_back(gen);
+        }
+    }
+    fin >> n;
+    for(int i = 0; i < n; i++)
+    {
+        PointLight *pl = new PointLight();
+        fin >> pl->position.x >> pl->position.y >> pl->position.z;
+        fin >> pl->color[0] >> pl->color[1] >> pl->color[2];
+        pointLights.push_back(pl);
+    }
+
+    fin >> n;
+    for(int i = 0; i < n; i++)
+    {
+        PointLight p1;
+        Vector direction;
+        double angle;
+        fin >> p1.position.x >> p1.position.y >> p1.position.z;
+        fin >> p1.color[0] >> p1.color[1] >> p1.color[2];
+        fin >> direction.x >> direction.y >> direction.z;
+        fin >> angle;
+        SpotLight *sl = new SpotLight(p1, direction, angle);
+        spotLights.push_back(sl);
+    }
+
+    Floor *f = new Floor(20, 1000);
+    f->setCoEfficients(0.4, 0.4, 0.4, 0.2);
+    f->setShine(5);
+    f->setColor(1, 1, 1);
+    f->setAltColor(0, 0, 0);
+    objects.push_back(f);
+
+    fin.close();
+}
 
 void display()
 {
@@ -23,6 +112,19 @@ void display()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     look.lookAt();
+
+    for(int i = 0; i < objects.size(); i++)
+    {
+        objects[i]->draw();
+    }
+    for(int i = 0; i < pointLights.size(); i++)
+    {
+        pointLights[i]->draw();
+    }
+    for(int i = 0; i < spotLights.size(); i++)
+    {
+        spotLights[i]->draw();
+    }
 
     glFlush();
 }
@@ -110,6 +212,7 @@ int main(int argc, char** argv)
     glutInitWindowPosition(10, 10);
     glutCreateWindow("Ray Tracing");
 
+    loadData();
     init();
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboardListener);
@@ -117,5 +220,17 @@ int main(int argc, char** argv)
     glutTimerFunc(50, Timer, 0);
 
     glutMainLoop();
+    for(int i = 0; i < objects.size(); i++)
+    {
+        delete objects[i];
+    }
+    for(int i = 0; i < pointLights.size(); i++)
+    {
+        delete pointLights[i];
+    }
+    for(int i = 0; i < spotLights.size(); i++)
+    {
+        delete spotLights[i];
+    }
     return 0;
 }

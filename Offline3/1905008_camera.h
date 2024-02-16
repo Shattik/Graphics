@@ -19,15 +19,15 @@ class Look
 
         Look()
         {
-            eyeX = 0;
-            eyeY = 0;
-            eyeZ = 3;
+            eyeX = -60;
+            eyeY = -60;
+            eyeZ = 60;
             centerX = 0;
             centerY = 0;
             centerZ = 0;
-            upX = 0;
-            upY = 1;
-            upZ = 0;
+            upX = 0.5;
+            upY = 0.5;
+            upZ = 1;
             del = 0.1;
             theta = 0.05; // radians
         }

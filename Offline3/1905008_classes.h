@@ -156,5 +156,100 @@ class General : public Object
             height = h;
         }
 
+        void draw()
+        {}
+};
+
+class Floor : public Object
+{
+    public:
+        double tileWidth;
+        double altColor[3];
+
+        Floor(double tileWidth, double floorWidth)
+        {
+            this->tileWidth = tileWidth;
+            reference_point = Vector(-floorWidth/2, -floorWidth/2, 0);
+            length = floorWidth;
+            width = floorWidth;
+        }
+
+        void setAltColor(double r, double g, double b)
+        {
+            altColor[0] = r;
+            altColor[1] = g;
+            altColor[2] = b;
+        }
+
+        void draw()
+        {
+            int n = length / tileWidth;
+            for(int i=0; i<n; i++){
+                for(int j=0; j<n; j++){
+                    if((i+j)%2 == 0){
+                        glColor3f(color[0], color[1], color[2]);
+                    }
+                    else{
+                        glColor3f(altColor[0], altColor[1], altColor[2]);
+                    }
+                    glPushMatrix();
+                    glTranslatef(reference_point.x + i*tileWidth, reference_point.y + j*tileWidth, reference_point.z);
+                    drawQuad(0, 0, 0, tileWidth, 0, 0, tileWidth, tileWidth, 0, 0, tileWidth, 0);
+                    glPopMatrix();
+                }
+            }
+        }
+};
+
+class PointLight
+{
+    public:
+        Vector position;
+        double color[3];
+
+        PointLight()
+        {
+            position = Vector(0, 0, 0);
+            color[0] = 1;
+            color[1] = 1;
+            color[2] = 1;
+        }
+
+        PointLight(Vector p, double r, double g, double b)
+        {
+            position = p;
+            color[0] = r;
+            color[1] = g;
+            color[2] = b;
+        }
+
+        void draw()
+        {
+            glPushMatrix();
+            glTranslatef(position.x, position.y, position.z);
+            glColor3f(color[0], color[1], color[2]);
+            glutSolidSphere(0.5, 100, 100);
+            glPopMatrix();
+        }
+};
+
+class SpotLight
+{
+    public:
+        PointLight point_light;
+        Vector direction;
+        double cut_off;
+
+        SpotLight(PointLight p, Vector d, double c)
+        {
+            point_light = p;
+            direction = d;
+            cut_off = c;
+        }
+
+        void draw()
+        {
+            point_light.draw();
+        }
 };
 #endif

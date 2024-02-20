@@ -23,8 +23,7 @@ vector<SpotLight*> spotLights;
 int recursionLevel, imageWidth, imageHeight;
 int windowWidth = 640, windowHeight = 640;
 int imageNum = 0;
-double viewAngle = 60;
-double planeDistance = 1;
+double viewAngle = 80;
 
 void loadData()
 {
@@ -127,10 +126,10 @@ void capture()
 
     topleft = topleft + r*(0.5*du) - u*(0.5*dv);
 
-    int nearest;
-    double t, tmin = INT_MAX;
     for(int i=0; i<imageWidth; i++){
         for(int j=0; j<imageHeight; j++){
+            int nearest;
+            double t, tmin = DBL_MAX;
             Vector curPix = topleft + (du*i)*r - (dv*j)*u;
             Ray *r = new Ray(eye, curPix-eye);
             double *color = new double[3];
@@ -144,7 +143,7 @@ void capture()
                     nearest = k;
                 }
             }
-            if(tmin == INT_MAX){
+            if(tmin == DBL_MAX){
                 color[0] = 0;
                 color[1] = 0;
                 color[2] = 0;
@@ -152,7 +151,7 @@ void capture()
             else{
                 tmin = objects[nearest]->intersect(r, color, recursionLevel);
             }
-            image->set_pixel(i, j, color[0], color[1], color[2]);
+            image->set_pixel(i, j, color[0]*255, color[1]*255, color[2]*255);
             delete[] color;
             delete r;
         }
@@ -192,7 +191,7 @@ void init()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60, 1, 1, 500);
+    gluPerspective(viewAngle, 1, 1, 500);
 }
 
 void keyboardListener(unsigned char key, int x, int y)

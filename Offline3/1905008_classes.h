@@ -12,6 +12,9 @@
 #ifndef CLASSES_H
 #define CLASSES_H
 
+#define epsilon 0.00001;
+
+class Ray;
 class Object;
 class Sphere;
 class Triangle;
@@ -19,11 +22,23 @@ class General;
 class Floor;
 class PointLight;
 class SpotLight;
-class Ray;
 
 extern std::vector<Object*> objects;
 extern std::vector<PointLight*> pointLights;
 extern std::vector<SpotLight*> spotLights;
+
+class Ray 
+{
+    public:
+        Vector start, dir;
+
+        Ray(Vector s, Vector d)
+        {
+            start = s;
+            dir = d;
+            dir.normalize();
+        }
+};
 
 class Object {
     public:
@@ -74,6 +89,16 @@ class Object {
         virtual double intersect(Ray *r, double *color, int level)
         {
             return -1.0;
+        }
+
+        virtual Vector getNormal(Vector point)
+        {
+            return Vector(0, 0, 0);
+        }
+
+        double *getColor(Vector point)
+        {
+            return color;
         }
 };
 
@@ -126,6 +151,68 @@ class Sphere : public Object
                 }
             }
             glPopMatrix();
+        }
+
+        int isInside(Vector point)
+        {
+            double dist = point.dot(point);
+            if(dist < length*length){
+                return 1;
+            }
+            else if(dist == length*length){
+                return 0;
+            }
+            else{
+                return -1;
+            }
+        }
+
+        Vector getNormal(Vector point)
+        {
+            Vector normal = point - reference_point;
+            normal.normalize();
+            return normal;
+        }
+
+
+    
+        double intersect(Ray *r, double *color, int level)
+        {
+            double tmin;
+            Vector origin(r->start - reference_point);
+            int res = isInside(origin);
+            if(res == 0){
+                origin = origin + r->dir * epsilon;
+            }
+            double tp = (-1)*(origin.dot(r->dir));
+            if(res == -1 && tp < 0){
+                return -1;
+            }
+            double dsquare = origin.dot(origin) - tp*tp;
+            if(dsquare > length*length){
+                return -1;
+            }
+            double tprime = sqrt(length*length - dsquare);
+            if(res == -1){
+                tmin = tp - tprime;
+            }
+            else{
+                tmin = tp + tprime;
+            }
+
+            if(level == 0){
+                return tmin;
+            }
+            Vector intersection(r->start + r->dir*tmin);
+            Vector normal = getNormal(intersection);
+            if(normal.dot(r->dir) > 0){
+                normal = normal * (-1);
+            }
+            double *surf_color = getColor(intersection);
+            color[0] = surf_color[0] * coEfficients[0];
+            color[1] = surf_color[1] * coEfficients[0];
+            color[2] = surf_color[2] * coEfficients[0];
+            return tmin;
         }
 };
 
@@ -269,19 +356,6 @@ class SpotLight
         void draw()
         {
             point_light.draw();
-        }
-};
-
-class Ray 
-{
-    public:
-        Vector start, dir;
-
-        Ray(Vector s, Vector d)
-        {
-            start = s;
-            dir = d;
-            dir.normalize();
         }
 };
 #endif

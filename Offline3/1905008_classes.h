@@ -11,6 +11,20 @@
 
 #ifndef CLASSES_H
 #define CLASSES_H
+
+class Object;
+class Sphere;
+class Triangle;
+class General;
+class Floor;
+class PointLight;
+class SpotLight;
+class Ray;
+
+extern std::vector<Object*> objects;
+extern std::vector<PointLight*> pointLights;
+extern std::vector<SpotLight*> spotLights;
+
 class Object {
     public:
         Vector reference_point;
@@ -55,6 +69,11 @@ class Object {
             coEfficients[1] = b;
             coEfficients[2] = c;
             coEfficients[3] = d;
+        }
+
+        virtual double intersect(Ray *r, double *color, int level)
+        {
+            return -1.0;
         }
 };
 
@@ -250,6 +269,19 @@ class SpotLight
         void draw()
         {
             point_light.draw();
+        }
+};
+
+class Ray 
+{
+    public:
+        Vector start, dir;
+
+        Ray(Vector s, Vector d)
+        {
+            start = s;
+            dir = d;
+            dir.normalize();
         }
 };
 #endif

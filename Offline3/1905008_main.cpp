@@ -10,6 +10,7 @@
 #include "1905008_vector.h"
 #include "1905008_camera.h"
 #include "1905008_classes.h"
+#include "bitmap_image.hpp"
 
 #define rad(x) ((x) * acos(-1) / 180)
 #define pi acos(-1)
@@ -19,13 +20,17 @@ using namespace std;
 vector<Object*> objects;
 vector<PointLight*> pointLights;
 vector<SpotLight*> spotLights;
-int recursionLevel, screenWidth, screenHeight;
+int recursionLevel, imageWidth, imageHeight;
+int windowWidth = 640, windowHeight = 640;
+int imageNum = 0;
+double viewAngle = 60;
+double planeDistance = 1;
 
 void loadData()
 {
     ifstream fin("scene.txt");
-    fin >> recursionLevel >> screenWidth;
-    screenHeight = screenWidth;
+    fin >> recursionLevel >> imageWidth;
+    imageHeight = imageWidth;
 
     int n;
     fin >> n;
@@ -105,6 +110,58 @@ void loadData()
     fin.close();
 }
 
+void capture()
+{
+    bitmap_image *image = new bitmap_image(imageWidth, imageHeight);
+    double planeDistance = (windowHeight / 2.0) / tan(rad(viewAngle / 2.0));
+    Vector eye(look.eyeX, look.eyeY, look.eyeZ);
+    Vector l(look.eyeX, look.eyeY, look.eyeZ, look.centerX, look.centerY, look.centerZ);
+    l.normalize();
+    Vector u(look.upX, look.upY, look.upZ);
+    u.normalize();
+    Vector r = l.cross(u);
+    r.normalize();
+    Vector topleft = eye + l*planeDistance - r*(windowWidth/2.0) + u*(windowHeight/2.0);
+    double du = (windowWidth*1.0)/imageWidth;
+    double dv = (windowHeight*1.0)/imageHeight;
+
+    topleft = topleft + r*(0.5*du) - u*(0.5*dv);
+
+    int nearest;
+    double t, tmin = INT_MAX;
+    for(int i=0; i<imageWidth; i++){
+        for(int j=0; j<imageHeight; j++){
+            Vector curPix = topleft + (du*i)*r - (dv*j)*u;
+            Ray *r = new Ray(eye, curPix-eye);
+            double *color = new double[3];
+            color[0] = 0;
+            color[1] = 0;
+            color[2] = 0;
+            for(int k=0; k<objects.size(); k++){
+                t = objects[k]->intersect(r, color, 0);
+                if(t >= 0 && t < tmin){
+                    tmin = t;
+                    nearest = k;
+                }
+            }
+            if(tmin == INT_MAX){
+                color[0] = 0;
+                color[1] = 0;
+                color[2] = 0;
+            }
+            else{
+                tmin = objects[nearest]->intersect(r, color, recursionLevel);
+            }
+            image->set_pixel(i, j, color[0], color[1], color[2]);
+            delete[] color;
+            delete r;
+        }
+    }
+    imageNum++;
+    image->save_image("Output_1"+to_string(imageNum)+".bmp");
+    delete image;
+}
+
 void display()
 {
     glEnable(GL_DEPTH_TEST);
@@ -166,6 +223,9 @@ void keyboardListener(unsigned char key, int x, int y)
         case 's':
             look.moveDownWithoutChange();
             break;
+        case '0':
+            capture();
+            break;
         default:
             break;
     }
@@ -208,7 +268,7 @@ void Timer(int value)
 int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
-    glutInitWindowSize(640, 640);
+    glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(10, 10);
     glutCreateWindow("Ray Tracing");
 

@@ -28,7 +28,7 @@ class Look
             upX = 0.5;
             upY = 0.5;
             upZ = 1;
-            del = 0.1;
+            del = 0.5;
             theta = 0.05; // radians
         }
 

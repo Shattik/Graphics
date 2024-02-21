@@ -1,5 +1,6 @@
 #include "1905008_vector.h"
 #include "1905008_drawing.h"
+#include <cfloat>
 #include <vector>
 
 #ifdef __linux__
@@ -26,6 +27,12 @@ class SpotLight;
 extern std::vector<Object*> objects;
 extern std::vector<PointLight*> pointLights;
 extern std::vector<SpotLight*> spotLights;
+extern int recursionLevel;
+
+double getDegree(double radian)
+{
+    return radian * 180.0 / acos(-1);
+}
 
 class Ray 
 {
@@ -40,6 +47,59 @@ class Ray
         }
 };
 
+class PointLight
+{
+    public:
+        Vector position;
+        double color[3];
+
+        PointLight()
+        {
+            position = Vector(0, 0, 0);
+            color[0] = 1;
+            color[1] = 1;
+            color[2] = 1;
+        }
+
+        PointLight(Vector p, double r, double g, double b)
+        {
+            position = p;
+            color[0] = r;
+            color[1] = g;
+            color[2] = b;
+        }
+
+        void draw()
+        {
+            glPushMatrix();
+            glTranslatef(position.x, position.y, position.z);
+            glColor3f(color[0], color[1], color[2]);
+            glutSolidSphere(0.5, 100, 100);
+            glPopMatrix();
+        }
+};
+
+class SpotLight
+{
+    public:
+        PointLight point_light;
+        Vector direction;
+        double cut_off;
+
+        SpotLight(PointLight p, Vector d, double c)
+        {
+            point_light = p;
+            direction = d;
+            direction.normalize();
+            cut_off = c;
+        }
+
+        void draw()
+        {
+            point_light.draw();
+        }
+};
+
 class Object {
     public:
         Vector reference_point;
@@ -47,6 +107,7 @@ class Object {
         double color[3];
         double coEfficients[4];
         int shine;
+        int id;
 
         Object()
         {
@@ -174,8 +235,6 @@ class Sphere : public Object
             return normal;
         }
 
-
-    
         double intersect(Ray *r, double *color, int level)
         {
             double tmin;
@@ -212,6 +271,102 @@ class Sphere : public Object
             color[0] = surf_color[0] * coEfficients[0];
             color[1] = surf_color[1] * coEfficients[0];
             color[2] = surf_color[2] * coEfficients[0];
+
+            for(int i=0; i<pointLights.size(); i++){
+                Ray *shadow = new Ray(pointLights[i]->position, intersection - pointLights[i]->position);
+                int nearest = -1;
+                double tshadow = DBL_MAX;
+                for(int j=0; j<objects.size(); j++){
+                    double t = objects[j]->intersect(shadow, color, 0);
+                    if(t >= 0 && t < tshadow){
+                        tshadow = t;
+                        nearest = j;
+                    }
+                }
+                if(nearest == id){
+                    double lambert = (-1)*normal.dot(shadow->dir);
+                    if(lambert > 0){
+                        color[0] += lambert * surf_color[0] * coEfficients[1] * pointLights[i]->color[0];
+                        color[1] += lambert * surf_color[1] * coEfficients[1] * pointLights[i]->color[1];
+                        color[2] += lambert * surf_color[2] * coEfficients[1] * pointLights[i]->color[2];
+                    }
+                    Vector reflection = shadow->dir - normal * (2 * shadow->dir.dot(normal));
+                    reflection.normalize();
+                    double phong = (-1)*reflection.dot(r->dir);
+                    if(phong > 0){
+                        phong = pow(phong, shine);
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                    }
+                }
+                delete shadow;
+            }
+
+            for(int i=0; i<spotLights.size(); i++){
+                Ray *shadow = new Ray(spotLights[i]->point_light.position, intersection - spotLights[i]->point_light.position);
+                int nearest = -1;
+                double tshadow = DBL_MAX;
+                double dot = shadow->dir.dot(spotLights[i]->direction);
+                if(getDegree(acos(dot)) > spotLights[i]->cut_off){
+                    continue;
+                }
+                for(int j=0; j<objects.size(); j++){
+                    double t = objects[j]->intersect(shadow, color, 0);
+                    if(t >= 0 && t < tshadow){
+                        tshadow = t;
+                        nearest = j;
+                    }
+                }
+                if(nearest == id){
+                    double lambert = (-1)*normal.dot(shadow->dir);
+                    if(lambert > 0){
+                        color[0] += lambert * surf_color[0] * coEfficients[1] * spotLights[i]->point_light.color[0] * pow(dot, 2);
+                        color[1] += lambert * surf_color[1] * coEfficients[1] * spotLights[i]->point_light.color[1] * pow(dot, 2);
+                        color[2] += lambert * surf_color[2] * coEfficients[1] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                    }
+                    Vector reflection = shadow->dir - normal * (2 * shadow->dir.dot(normal));
+                    reflection.normalize();
+                    double phong = (-1)*reflection.dot(r->dir);
+                    if(phong > 0){
+                        phong = pow(phong, shine);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                    }
+                }
+                delete shadow;
+            }
+            
+            if(level >= recursionLevel){
+                return tmin;
+            }
+
+            Vector reflection = r->dir - normal * (2 * r->dir.dot(normal));
+            reflection.normalize();
+            Vector start = intersection + reflection * epsilon;
+            Ray *reflected = new Ray(start, reflection);
+            double *reflected_color = new double[3];
+            reflected_color[0] = 0;
+            reflected_color[1] = 0;
+            reflected_color[2] = 0;
+            double t = DBL_MAX;
+            int nearest = -1;
+            for(int i=0; i<objects.size(); i++){
+                double t1 = objects[i]->intersect(reflected, reflected_color, 0);
+                if(t1 >= 0 && t1 < t){
+                    t = t1;
+                    nearest = i;
+                }
+            }
+            if(nearest != -1){
+                t = objects[nearest]->intersect(reflected, reflected_color, level+1);
+                color[0] += reflected_color[0] * coEfficients[3];
+                color[1] += reflected_color[1] * coEfficients[3];
+                color[2] += reflected_color[2] * coEfficients[3];
+            }
+            delete reflected;
+            delete[] reflected_color;
             return tmin;
         }
 };
@@ -232,6 +387,48 @@ class Triangle : public Object
         {
             glColor3f(color[0], color[1], color[2]);
             drawTriangle(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+        }
+
+        Vector getNormal(Vector point)
+        {
+            Vector normal = (b - a).cross(c - a);
+            normal.normalize();
+            return normal;
+        }
+
+        double *getColor(Vector point)
+        {
+            return color;
+        }
+
+        double intersect(Ray *r, double *color, int level)
+        {
+            double tmin;
+            double a[3][3] = {{this->a.x - this->b.x, this->a.x - this->c.x, r->dir.x},
+                              {this->a.y - this->b.y, this->a.y - this->c.y, r->dir.y},
+                              {this->a.z - this->b.z, this->a.z - this->c.z, r->dir.z}};
+            double b[3][3] = {{this->a.x - r->start.x, this->a.x - this->c.x, r->dir.x},
+                              {this->a.y - r->start.y, this->a.y - this->c.y, r->dir.y},
+                              {this->a.z - r->start.z, this->a.z - this->c.z, r->dir.z}};
+            double c[3][3] = {{this->a.x - this->b.x, this->a.x - r->start.x, r->dir.x},
+                              {this->a.y - this->b.y, this->a.y - r->start.y, r->dir.y},
+                              {this->a.z - this->b.z, this->a.z - r->start.z, r->dir.z}};
+            double d[3][3] = {{this->a.x - this->b.x, this->a.x - this->c.x, this->a.x - r->start.x},
+                              {this->a.y - this->b.y, this->a.y - this->c.y, this->a.y - r->start.y},
+                              {this->a.z - this->b.z, this->a.z - this->c.z, this->a.z - r->start.z}};
+            Matrix A(a), B(b), C(c), D(d);
+            double del = A.det();
+            if(del == 0){
+                return -1;
+            }
+            double beta = B.det() / del;
+            double gamma = C.det() / del;
+            double t = D.det() / del;
+            if(beta < 0 || gamma < 0 || beta + gamma > 1 || t < 0){
+                return -1;
+            }
+            Vector intersection(r->start + r->dir*t);
+            tmin = r->start.distance(intersection);
         }
 };
 
@@ -305,57 +502,145 @@ class Floor : public Object
                 }
             }
         }
-};
 
-class PointLight
-{
-    public:
-        Vector position;
-        double color[3];
-
-        PointLight()
+        Vector getNormal(Vector point)
         {
-            position = Vector(0, 0, 0);
-            color[0] = 1;
-            color[1] = 1;
-            color[2] = 1;
+            return Vector(0, 0, 1);
         }
 
-        PointLight(Vector p, double r, double g, double b)
+        double* getColor(Vector point)
         {
-            position = p;
-            color[0] = r;
-            color[1] = g;
-            color[2] = b;
+            int i = (point.x - reference_point.x) / tileWidth;
+            int j = (point.y - reference_point.y) / tileWidth;
+            if((i+j)%2 == 0){
+                return color;
+            }
+            else{
+                return altColor;
+            }
         }
 
-        void draw()
+        double intersect(Ray *r, double *color, int level)
         {
-            glPushMatrix();
-            glTranslatef(position.x, position.y, position.z);
-            glColor3f(color[0], color[1], color[2]);
-            glutSolidSphere(0.5, 100, 100);
-            glPopMatrix();
-        }
-};
+            double tmin;
+            double tao = - (r->start.z / r->dir.z);
+            if(tao < 0){
+                return -1;
+            }
+            Vector intersection(r->start + r->dir*tao);
+            if(intersection.x < reference_point.x || intersection.x > reference_point.x + length || intersection.y < reference_point.y || intersection.y > reference_point.y + width){
+                return -1;
+            }
+            tmin = r->start.distance(intersection);
 
-class SpotLight
-{
-    public:
-        PointLight point_light;
-        Vector direction;
-        double cut_off;
+            if(level == 0){
+                return tmin;
+            }
+            Vector normal = getNormal(intersection);
+            if(normal.dot(r->dir) > 0){
+                normal = normal * (-1);
+            }
+            double *surf_color = getColor(intersection);
+            color[0] = surf_color[0] * coEfficients[0];
+            color[1] = surf_color[1] * coEfficients[0];
+            color[2] = surf_color[2] * coEfficients[0];
 
-        SpotLight(PointLight p, Vector d, double c)
-        {
-            point_light = p;
-            direction = d;
-            cut_off = c;
-        }
+            for(int i=0; i<pointLights.size(); i++){
+                Ray *shadow = new Ray(pointLights[i]->position, intersection - pointLights[i]->position);
+                int nearest = -1;
+                double tshadow = DBL_MAX;
+                for(int j=0; j<objects.size(); j++){
+                    double t = objects[j]->intersect(shadow, color, 0);
+                    if(t >= 0 && t < tshadow){
+                        tshadow = t;
+                        nearest = j;
+                    }
+                }
+                if(nearest == id){
+                    double lambert = (-1)*normal.dot(shadow->dir);
+                    if(lambert > 0){
+                        color[0] += lambert * surf_color[0] * coEfficients[1] * pointLights[i]->color[0];
+                        color[1] += lambert * surf_color[1] * coEfficients[1] * pointLights[i]->color[1];
+                        color[2] += lambert * surf_color[2] * coEfficients[1] * pointLights[i]->color[2];
+                    }
+                    Vector reflection = shadow->dir - normal * (2 * shadow->dir.dot(normal));
+                    reflection.normalize();
+                    double phong = (-1)*reflection.dot(r->dir);
+                    if(phong > 0){
+                        phong = pow(phong, shine);
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                    }
+                }
+                delete shadow;
+            }
 
-        void draw()
-        {
-            point_light.draw();
+            for(int i=0; i<spotLights.size(); i++){
+                Ray *shadow = new Ray(spotLights[i]->point_light.position, intersection - spotLights[i]->point_light.position);
+                int nearest = -1;
+                double tshadow = DBL_MAX;
+                double dot = shadow->dir.dot(spotLights[i]->direction);
+                if(getDegree(acos(dot)) > spotLights[i]->cut_off){
+                    continue;
+                }
+                for(int j=0; j<objects.size(); j++){
+                    double t = objects[j]->intersect(shadow, color, 0);
+                    if(t >= 0 && t < tshadow){
+                        tshadow = t;
+                        nearest = j;
+                    }
+                }
+                if(nearest == id){
+                    double lambert = (-1)*normal.dot(shadow->dir);
+                    if(lambert > 0){
+                        color[0] += lambert * surf_color[0] * coEfficients[1] * spotLights[i]->point_light.color[0] * pow(dot, 2);
+                        color[1] += lambert * surf_color[1] * coEfficients[1] * spotLights[i]->point_light.color[1] * pow(dot, 2);
+                        color[2] += lambert * surf_color[2] * coEfficients[1] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                    }
+                    Vector reflection = shadow->dir - normal * (2 * shadow->dir.dot(normal));
+                    reflection.normalize();
+                    double phong = (-1)*reflection.dot(r->dir);
+                    if(phong > 0){
+                        phong = pow(phong, shine);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                    }
+                }
+                delete shadow;
+            }
+            
+            if(level >= recursionLevel){
+                return tmin;
+            }
+
+            Vector reflection = r->dir - normal * (2 * r->dir.dot(normal));
+            reflection.normalize();
+            Vector start = intersection + reflection * epsilon;
+            Ray *reflected = new Ray(start, reflection);
+            double *reflected_color = new double[3];
+            reflected_color[0] = 0;
+            reflected_color[1] = 0;
+            reflected_color[2] = 0;
+            double t = DBL_MAX;
+            int nearest = -1;
+            for(int i=0; i<objects.size(); i++){
+                double t1 = objects[i]->intersect(reflected, reflected_color, 0);
+                if(t1 >= 0 && t1 < t){
+                    t = t1;
+                    nearest = i;
+                }
+            }
+            if(nearest != -1){
+                t = objects[nearest]->intersect(reflected, reflected_color, level+1);
+                color[0] += reflected_color[0] * coEfficients[3];
+                color[1] += reflected_color[1] * coEfficients[3];
+                color[2] += reflected_color[2] * coEfficients[3];
+            }
+            delete reflected;
+            delete[] reflected_color;
+            return tmin;
         }
 };
 #endif

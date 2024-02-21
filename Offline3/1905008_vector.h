@@ -77,6 +77,11 @@ class Vector
             return res;
         }
 
+        double distance(Vector v)
+        {
+            return sqrt((x - v.x) * (x - v.x) + (y - v.y) * (y - v.y) + (z - v.z) * (z - v.z));
+        }
+
         friend Vector operator*(double a, Vector v)
         {
             Vector res;
@@ -89,6 +94,40 @@ class Vector
         friend Vector operator*(Vector v, double a)
         {
             return a * v;
+        }
+
+};
+
+class Matrix
+{
+    public:
+        double m[3][3];
+
+        Matrix()
+        {
+            for(int i = 0; i < 3; i++)
+            {
+                for(int j = 0; j < 3; j++)
+                {
+                    m[i][j] = 0;
+                }
+            }
+        }
+
+        Matrix(double m[3][3])
+        {
+            for(int i = 0; i < 3; i++)
+            {
+                for(int j = 0; j < 3; j++)
+                {
+                    this->m[i][j] = m[i][j];
+                }
+            }
+        }
+
+        double det()
+        {
+            return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
         }
 
 };

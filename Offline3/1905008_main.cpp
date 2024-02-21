@@ -100,11 +100,15 @@ void loadData()
     }
 
     Floor *f = new Floor(20, 1000);
-    f->setCoEfficients(0.4, 0.4, 0.4, 0.2);
+    f->setCoEfficients(0.3, 0.4, 0.1, 0.2);
     f->setShine(5);
     f->setColor(1, 1, 1);
     f->setAltColor(0, 0, 0);
     objects.push_back(f);
+
+    for(int i=0; i<objects.size(); i++){
+        objects[i]->id = i;
+    }
 
     fin.close();
 }
@@ -149,7 +153,7 @@ void capture()
                 color[2] = 0;
             }
             else{
-                tmin = objects[nearest]->intersect(r, color, recursionLevel);
+                tmin = objects[nearest]->intersect(r, color, 1);
             }
             image->set_pixel(i, j, color[0]*255, color[1]*255, color[2]*255);
             delete[] color;

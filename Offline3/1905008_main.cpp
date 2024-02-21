@@ -100,7 +100,7 @@ void loadData()
     }
 
     Floor *f = new Floor(20, 1000);
-    f->setCoEfficients(0.3, 0.4, 0.1, 0.2);
+    f->setCoEfficients(0.4, 0.2, 0.2, 0.2);
     f->setShine(5);
     f->setColor(1, 1, 1);
     f->setAltColor(0, 0, 0);

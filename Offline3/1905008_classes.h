@@ -423,12 +423,120 @@ class Triangle : public Object
             }
             double beta = B.det() / del;
             double gamma = C.det() / del;
-            double t = D.det() / del;
-            if(beta < 0 || gamma < 0 || beta + gamma > 1 || t < 0){
+            double tao = D.det() / del;
+            if(beta < 0 || gamma < 0 || beta + gamma > 1 || tao < 0){
                 return -1;
             }
-            Vector intersection(r->start + r->dir*t);
+            Vector intersection(r->start + r->dir*tao);
             tmin = r->start.distance(intersection);
+            if(level == 0){
+                return tmin;
+            }
+            Vector normal = getNormal(intersection);
+            if(normal.dot(r->dir) > 0){
+                normal = normal * (-1);
+            }
+            double *surf_color = getColor(intersection);
+            color[0] = surf_color[0] * coEfficients[0];
+            color[1] = surf_color[1] * coEfficients[0];
+            color[2] = surf_color[2] * coEfficients[0];
+
+            for(int i=0; i<pointLights.size(); i++){
+                Ray *shadow = new Ray(pointLights[i]->position, intersection - pointLights[i]->position);
+                int nearest = -1;
+                double tshadow = DBL_MAX;
+                for(int j=0; j<objects.size(); j++){
+                    double t = objects[j]->intersect(shadow, color, 0);
+                    if(t >= 0 && t < tshadow){
+                        tshadow = t;
+                        nearest = j;
+                    }
+                }
+                if(nearest == id){
+                    double lambert = (-1)*normal.dot(shadow->dir);
+                    if(lambert > 0){
+                        color[0] += lambert * surf_color[0] * coEfficients[1] * pointLights[i]->color[0];
+                        color[1] += lambert * surf_color[1] * coEfficients[1] * pointLights[i]->color[1];
+                        color[2] += lambert * surf_color[2] * coEfficients[1] * pointLights[i]->color[2];
+                    }
+                    Vector reflection = shadow->dir - normal * (2 * shadow->dir.dot(normal));
+                    reflection.normalize();
+                    double phong = (-1)*reflection.dot(r->dir);
+                    if(phong > 0){
+                        phong = pow(phong, shine);
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                    }
+                }
+                delete shadow;
+            }
+
+            for(int i=0; i<spotLights.size(); i++){
+                Ray *shadow = new Ray(spotLights[i]->point_light.position, intersection - spotLights[i]->point_light.position);
+                int nearest = -1;
+                double tshadow = DBL_MAX;
+                double dot = shadow->dir.dot(spotLights[i]->direction);
+                if(getDegree(acos(dot)) > spotLights[i]->cut_off){
+                    continue;
+                }
+                for(int j=0; j<objects.size(); j++){
+                    double t = objects[j]->intersect(shadow, color, 0);
+                    if(t >= 0 && t < tshadow){
+                        tshadow = t;
+                        nearest = j;
+                    }
+                }
+                if(nearest == id){
+                    double lambert = (-1)*normal.dot(shadow->dir);
+                    if(lambert > 0){
+                        color[0] += lambert * surf_color[0] * coEfficients[1] * spotLights[i]->point_light.color[0] * pow(dot, 2);
+                        color[1] += lambert * surf_color[1] * coEfficients[1] * spotLights[i]->point_light.color[1] * pow(dot, 2);
+                        color[2] += lambert * surf_color[2] * coEfficients[1] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                    }
+                    Vector reflection = shadow->dir - normal * (2 * shadow->dir.dot(normal));
+                    reflection.normalize();
+                    double phong = (-1)*reflection.dot(r->dir);
+                    if(phong > 0){
+                        phong = pow(phong, shine);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                    }
+                }
+                delete shadow;
+            }
+            
+            if(level >= recursionLevel){
+                return tmin;
+            }
+
+            Vector reflection = r->dir - normal * (2 * r->dir.dot(normal));
+            reflection.normalize();
+            Vector start = intersection + reflection * epsilon;
+            Ray *reflected = new Ray(start, reflection);
+            double *reflected_color = new double[3];
+            reflected_color[0] = 0;
+            reflected_color[1] = 0;
+            reflected_color[2] = 0;
+            double t = DBL_MAX;
+            int nearest = -1;
+            for(int i=0; i<objects.size(); i++){
+                double t1 = objects[i]->intersect(reflected, reflected_color, 0);
+                if(t1 >= 0 && t1 < t){
+                    t = t1;
+                    nearest = i;
+                }
+            }
+            if(nearest != -1){
+                t = objects[nearest]->intersect(reflected, reflected_color, level+1);
+                color[0] += reflected_color[0] * coEfficients[3];
+                color[1] += reflected_color[1] * coEfficients[3];
+                color[2] += reflected_color[2] * coEfficients[3];
+            }
+            delete reflected;
+            delete[] reflected_color;
+            return tmin;
         }
 };
 

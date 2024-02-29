@@ -242,6 +242,7 @@ class Sphere : public Object
             int res = isInside(origin);
             if(res == 0){
                 origin = origin + r->dir * epsilon;
+                res = isInside(origin);
             }
             double tp = (-1)*(origin.dot(r->dir));
             if(res == -1 && tp < 0){

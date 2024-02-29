@@ -156,6 +156,9 @@ void capture()
             else{
                 tmin = objects[nearest]->intersect(r, color, 1);
             }
+            if(color[0] > 1) color[0] = 1;
+            if(color[1] > 1) color[1] = 1;
+            if(color[2] > 1) color[2] = 1;
             image->set_pixel(i, j, color[0]*255, color[1]*255, color[2]*255);
             delete[] color;
             delete r;

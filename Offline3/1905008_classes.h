@@ -295,9 +295,9 @@ class Sphere : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
-                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
-                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0] * surf_color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1] * surf_color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2] * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -330,9 +330,9 @@ class Sphere : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
-                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
-                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2) * surf_color[0];
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2) * surf_color[1];
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2) * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -354,7 +354,7 @@ class Sphere : public Object
             int nearest = -1;
             for(int i=0; i<objects.size(); i++){
                 double t1 = objects[i]->intersect(reflected, reflected_color, 0);
-                if(t1 >= 0 && t1 < t){
+                if(t1 >=0 && t1 < t){
                     t = t1;
                     nearest = i;
                 }
@@ -464,9 +464,9 @@ class Triangle : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
-                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
-                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0] * surf_color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1] * surf_color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2] * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -499,9 +499,9 @@ class Triangle : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
-                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
-                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2) * surf_color[0];
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2) * surf_color[1];
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2) * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -668,9 +668,9 @@ class General : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
-                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
-                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0] * surf_color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1] * surf_color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2] * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -703,9 +703,9 @@ class General : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
-                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
-                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2) * surf_color[0];
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2) * surf_color[1];
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2) * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -849,9 +849,9 @@ class Floor : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0];
-                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1];
-                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2];
+                        color[0] += phong * coEfficients[2] * pointLights[i]->color[0] * surf_color[0];
+                        color[1] += phong * coEfficients[2] * pointLights[i]->color[1] * surf_color[1];
+                        color[2] += phong * coEfficients[2] * pointLights[i]->color[2] * surf_color[2];
                     }
                 }
                 delete shadow;
@@ -884,9 +884,9 @@ class Floor : public Object
                     double phong = (-1)*reflection.dot(r->dir);
                     if(phong > 0){
                         phong = pow(phong, shine);
-                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2);
-                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2);
-                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2);
+                        color[0] += phong * coEfficients[2] * spotLights[i]->point_light.color[0] * pow(dot, 2) * surf_color[0];
+                        color[1] += phong * coEfficients[2] * spotLights[i]->point_light.color[1] * pow(dot, 2) * surf_color[1];
+                        color[2] += phong * coEfficients[2] * spotLights[i]->point_light.color[2] * pow(dot, 2) * surf_color[2];
                     }
                 }
                 delete shadow;

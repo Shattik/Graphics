@@ -21,7 +21,7 @@ vector<Object*> objects;
 vector<PointLight*> pointLights;
 vector<SpotLight*> spotLights;
 int recursionLevel, imageWidth, imageHeight;
-int windowWidth = 640, windowHeight = 640;
+double windowWidth, windowHeight, nearPlane = 1, farPlane = 500;
 int imageNum = 0;
 double viewAngle = 80;
 
@@ -116,7 +116,8 @@ void loadData()
 void capture()
 {
     bitmap_image *image = new bitmap_image(imageWidth, imageHeight);
-    double planeDistance = (windowHeight / 2.0) / tan(rad(viewAngle / 2.0));
+    windowHeight = 2 * nearPlane * tan(rad(viewAngle / 2.0));
+    windowWidth = windowHeight;
     Vector eye(look.eyeX, look.eyeY, look.eyeZ);
     Vector l(look.eyeX, look.eyeY, look.eyeZ, look.centerX, look.centerY, look.centerZ);
     l.normalize();
@@ -124,7 +125,7 @@ void capture()
     u.normalize();
     Vector r = l.cross(u);
     r.normalize();
-    Vector topleft = eye + l*planeDistance - r*(windowWidth/2.0) + u*(windowHeight/2.0);
+    Vector topleft = eye + l*nearPlane - r*(windowWidth/2.0) + u*(windowHeight/2.0);
     double du = (windowWidth*1.0)/imageWidth;
     double dv = (windowHeight*1.0)/imageHeight;
 
@@ -135,7 +136,7 @@ void capture()
             int nearest;
             double t, tmin = DBL_MAX;
             Vector curPix = topleft + (du*i)*r - (dv*j)*u;
-            Ray *r = new Ray(eye, curPix-eye);
+            Ray *r = new Ray(curPix, curPix-eye);
             double *color = new double[3];
             color[0] = 0;
             color[1] = 0;
@@ -147,7 +148,7 @@ void capture()
                     nearest = k;
                 }
             }
-            if(tmin == DBL_MAX){
+            if(tmin == DBL_MAX || ((r->dir*tmin).dot(l)) > farPlane){
                 color[0] = 0;
                 color[1] = 0;
                 color[2] = 0;
@@ -195,7 +196,7 @@ void init()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(viewAngle, 1, 1, 500);
+    gluPerspective(viewAngle, 1, nearPlane, farPlane);
 }
 
 void keyboardListener(unsigned char key, int x, int y)
@@ -271,7 +272,7 @@ void Timer(int value)
 int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
-    glutInitWindowSize(windowWidth, windowHeight);
+    glutInitWindowSize(640, 640);
     glutInitWindowPosition(10, 10);
     glutCreateWindow("Ray Tracing");
 
